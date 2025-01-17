@@ -8,12 +8,9 @@ export async function signUp({ email, password, full_name, role, company_id }: S
     throw new Error('Missing required fields');
   }
 
-  // Step 2: Check if user already exists
-  const { data: existingUser } = await supabase
-    .from('users')
-    .select('id')
-    .eq('email', email)
-    .single();
+  // Step 2: Check if user already exists in auth.users
+  const { data: { users }, error: getUserError } = await supabase.auth.admin.listUsers();
+  const existingUser = users?.find(u => u.email === email);
 
   if (existingUser) {
     throw new Error('User with this email already exists');
