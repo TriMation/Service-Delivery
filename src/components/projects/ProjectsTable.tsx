@@ -29,10 +29,14 @@ export function ProjectsTable({ projects, onProjectClick, canEdit }: ProjectsTab
   };
 
   const calculateProgress = (project: Project) => {
-    const tasks = (project.tasks as any[]) || [];
-    if (tasks.length === 0) return 0;
-    const completed = tasks.filter(task => task.status === 'completed').length;
-    return Math.round((completed / tasks.length) * 100);
+    const totalHours = calculateTotalHours(project);
+    if (project.allocated_hours === 0) return 0;
+    return Math.round((totalHours / project.allocated_hours) * 100);
+  };
+
+  const getProgressColor = (hoursUsed: number, hoursAllocated: number) => {
+    const percentage = hoursAllocated > 0 ? (hoursUsed / hoursAllocated) * 100 : 0;
+    return percentage >= 100 ? 'bg-red-600' : percentage >= 80 ? 'bg-yellow-600' : 'bg-indigo-600';
   };
 
   return (
@@ -41,10 +45,10 @@ export function ProjectsTable({ projects, onProjectClick, canEdit }: ProjectsTab
         <thead className="bg-gray-50">
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Project
+              Client
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Client
+              Project
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
@@ -68,6 +72,12 @@ export function ProjectsTable({ projects, onProjectClick, canEdit }: ProjectsTab
               className={canEdit ? 'hover:bg-gray-50 cursor-pointer' : ''}
             >
               <td className="px-6 py-4">
+                <div className="flex items-center text-sm text-gray-900">
+                  <Building2 className="h-5 w-5 text-gray-400 mr-2" />
+                  {(project.company as any)?.name || 'No Client'}
+                </div>
+              </td>
+              <td className="px-6 py-4">
                 <div className="flex items-center">
                   <div>
                     <div className="text-sm font-medium text-gray-900">
@@ -83,12 +93,6 @@ export function ProjectsTable({ projects, onProjectClick, canEdit }: ProjectsTab
                 </div>
               </td>
               <td className="px-6 py-4">
-                <div className="flex items-center text-sm text-gray-900">
-                  <Building2 className="h-5 w-5 text-gray-400 mr-2" />
-                  {(project.company as any)?.name || 'No Client'}
-                </div>
-              </td>
-              <td className="px-6 py-4">
                 <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusColor(project.status)}`}>
                   {project.status.replace('_', ' ')}
                 </span>
@@ -96,15 +100,15 @@ export function ProjectsTable({ projects, onProjectClick, canEdit }: ProjectsTab
               <td className="px-6 py-4">
                 <div className="flex items-center">
                   <div className="flex items-center">
-                    <CheckSquare className="h-5 w-5 text-gray-400 mr-2" />
+                    <CheckSquare className="h-5 w-5 text-gray-400 mr-1" />
                     <span className="text-sm text-gray-900">
                       {calculateProgress(project)}%
                     </span>
                   </div>
                   <div className="ml-4 flex-1 h-2 bg-gray-100 rounded-full">
                     <div
-                      className="h-2 bg-indigo-600 rounded-full"
-                      style={{ width: `${calculateProgress(project)}%` }}
+                      className={`h-2 rounded-full ${getProgressColor(calculateTotalHours(project), project.allocated_hours)}`}
+                      style={{ width: `${Math.min((calculateTotalHours(project) / project.allocated_hours) * 100, 100)}%` }}
                     />
                   </div>
                 </div>
@@ -125,9 +129,19 @@ export function ProjectsTable({ projects, onProjectClick, canEdit }: ProjectsTab
               <td className="px-6 py-4">
                 <div className="flex items-center text-sm text-gray-900">
                   <Clock className="h-5 w-5 text-gray-400 mr-2" />
-                  <span className={calculateTotalHours(project) > project.allocated_hours ? 'text-red-600 font-medium' : ''}>
-                    {calculateTotalHours(project)} / {project.allocated_hours} hrs
-                  </span>
+                  <div className="flex-1">
+                    <div className={`${
+                      calculateTotalHours(project) > project.allocated_hours ? 'text-red-600 font-medium' : ''
+                    }`}>
+                      {calculateTotalHours(project).toFixed(1)} / {project.allocated_hours} hrs
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-100 rounded-full mt-1">
+                      <div
+                        className={`h-1.5 rounded-full ${getProgressColor(calculateTotalHours(project), project.allocated_hours)}`}
+                        style={{ width: `${Math.min((calculateTotalHours(project) / project.allocated_hours) * 100, 100)}%` }}
+                      />
+                    </div>
+                  </div>
                 </div>
               </td>
             </tr>

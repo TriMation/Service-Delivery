@@ -22,17 +22,11 @@ export async function uploadProjectPDF(file: File) {
 export async function getProjects(userId: string, isAdmin: boolean) {
   let query = supabase
     .from('projects')
-    .select(`
+    .select(`  
       *,
       company:companies(*),
-      tasks:tasks!tasks_project_id_fkey(
-        id, 
-        status,
-        time_entries(
-          id,
-          hours
-        )
-      )
+      tasks:tasks!tasks_project_id_fkey(id, status),
+      time_entries(id, hours)
     `);
 
   // If not admin, only show projects from user's company

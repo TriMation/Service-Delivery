@@ -140,9 +140,8 @@ export function ProjectPanel({
   };
 
   const calculateTotalHours = () => {
-    if (!project?.time_entries) return 0;
-    const timeEntries = project.time_entries as any[];
-    return timeEntries.reduce((sum, entry) => sum + (entry.hours || 0), 0);
+    const timeEntries = (project?.time_entries as any[]) || [];
+    return timeEntries.reduce((sum, entry) => sum + (Number(entry.hours) || 0), 0);
   };
 
   return (

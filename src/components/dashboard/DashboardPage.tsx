@@ -42,10 +42,10 @@ export function DashboardPage() {
   const { data: timeEntries = [] } = useQuery({
     queryKey: ['time-entries', { dateRange: 'week' }],
     queryFn: () => getTimeEntries(user!.id, user!.isAdmin, {
-      search: '', 
-      dateRange: 'all', // Changed to 'all' to get all time entries for utilization
-      project: '', 
-      user: '', 
+      search: '',
+      dateRange: 'all',
+      project: '',
+      user: '',
     }),
   });
 
@@ -67,7 +67,7 @@ export function DashboardPage() {
     const percentageUsed = hoursAllocated > 0 ? (hoursUsed / hoursAllocated) * 100 : 0;
 
     return {
-      projectName: project.name,
+      projectName: `${(project.company as any)?.name || 'No Company'} - ${project.name}`,
       hoursUsed,
       hoursAllocated,
       percentageUsed
@@ -101,7 +101,12 @@ export function DashboardPage() {
 
 
   // Calculate metrics
-  const totalHoursThisWeek = timeEntries.reduce((sum, entry) => sum + entry.hours, 0);
+  const totalHoursThisWeek = timeEntries
+    .filter(entry => {
+      const entryDate = new Date(entry.date);
+      return entryDate >= weekStart && entryDate <= weekEnd;
+    })
+    .reduce((sum, entry) => sum + entry.hours, 0);
   const pendingRequests = requests.filter(r => r.status === 'pending').length;
   const activeProjects = projects.filter(p => p.status === 'active').length;
   const overdueTasks = tasks.filter(task => {
