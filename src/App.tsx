@@ -8,10 +8,12 @@ import { ProjectsPage } from './components/projects/ProjectsPage';
 import { ClientsPage } from './components/clients/ClientsPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { DashboardPage } from './components/dashboard/DashboardPage';
+import { CostingsPage } from './components/users/CostingsPage';
 import { ReportsPage } from './components/reports/ReportsPage';
 import { TimeTrackingPage } from './components/time/TimeTrackingPage';
 import { UsersPage } from './components/users/UsersPage';
 import { SettingsPage } from './components/settings/SettingsPage';
+import { SkillsPage } from './components/users/SkillsPage';
 import { TasksPage } from './components/tasks/TasksPage';
 import { RequestsPage } from './components/requests/RequestsPage';
 import { useAuth } from './components/auth/AuthProvider';
@@ -120,6 +122,26 @@ function AppRoutes() {
           <ProtectedRoute>
             <DashboardLayout>
               <SettingsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/costings"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <CostingsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/skills"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <SkillsPage />
             </DashboardLayout>
           </ProtectedRoute>
         }

@@ -97,3 +97,33 @@ export interface Request {
   created_at: string;
   updated_at: string;
 }
+
+export interface ResourceMatrix {
+  id: string;
+  user_id: string;
+  cost: number;
+  competency: number;
+  time_loading: number;
+  cost_loading: number;
+  created_at: string;
+  updated_at: string;
+  user?: User;
+}
+
+export interface Skill {
+  id: string;
+  name: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface SkillMatrix {
+  id: string;
+  user_id: string;
+  skill_id: string;
+  proficiency_level: 'none' | 'medium' | 'high';
+  created_at: string;
+  updated_at: string;
+  user?: User;
+  skill?: Skill;
+}

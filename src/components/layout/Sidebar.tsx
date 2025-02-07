@@ -7,7 +7,9 @@ import {
   Building2,
   CheckSquare,
   Clock,
+  DollarSign,
   BarChart3,
+  Star,
   Users,
   UserCog,
   Settings,
@@ -24,17 +26,22 @@ interface NavItem {
   icon: React.ReactNode;
   href: string;
   roles: Array<'admin' | 'user' | 'client'>;
+  divider?: boolean;
 }
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', icon: <LayoutDashboard size={20} />, href: '/', roles: ['admin', 'user', 'client'] },
-  { label: 'Projects', icon: <Briefcase size={20} />, href: '/projects', roles: ['admin'] },
   { label: 'Tasks', icon: <CheckSquare size={20} />, href: '/tasks', roles: ['admin'] },
-  { label: 'Clients', icon: <Building2 size={20} />, href: '/clients', roles: ['admin'] },
   { label: 'Time Tracking', icon: <Clock size={20} />, href: '/time', roles: ['admin', 'user'] },
+  { label: 'Costings', icon: <DollarSign size={20} />, href: '/costings', roles: ['admin'] },
+  { label: 'Skills Matrix', icon: <Star size={20} />, href: '/skills', roles: ['admin'] },
+  { label: 'Requests', icon: <MessagesSquare size={20} />, href: '/requests', roles: ['admin', 'user', 'client'], divider: true },
+  
+  { label: 'Projects', icon: <Briefcase size={20} />, href: '/projects', roles: ['admin'] },
+  { label: 'Clients', icon: <Building2 size={20} />, href: '/clients', roles: ['admin'] },
   { label: 'Reports', icon: <BarChart3 size={20} />, href: '/reports', roles: ['admin'] },
-  { label: 'Requests', icon: <MessagesSquare size={20} />, href: '/requests', roles: ['admin', 'user', 'client'] },
-  { label: 'User Management', icon: <UserCog size={20} />, href: '/users', roles: ['admin'] },
+  { label: 'User Management', icon: <UserCog size={20} />, href: '/users', roles: ['admin'], divider: true },
+  
   { label: 'Settings', icon: <Settings size={20} />, href: '/settings', roles: ['admin'] },
   
   // User specific routes
@@ -87,10 +94,10 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
 
         <nav className="flex-1 overflow-y-auto py-4">
           <ul className="space-y-1 px-3">
-            {filteredNavItems.map((item) => {
+            {filteredNavItems.map((item, index) => {
               const isActive = location.pathname === item.href;
               return (
-                <li key={item.href}>
+                <li key={item.href} className={item.divider ? 'mb-4 pb-4 border-b border-gray-200' : ''}>
                   <Link
                     to={item.href}
                     className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
