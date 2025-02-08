@@ -20,7 +20,6 @@ export function ResourcePanel({
   const [error, setError] = useState<string>();
   const [formData, setFormData] = useState({
     cost: resource?.cost || 0,
-    competency: resource?.competency || 3,
     time_loading: resource?.time_loading || 100,
     cost_loading: resource?.cost_loading || 0,
   });
@@ -94,6 +93,18 @@ export function ResourcePanel({
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
+                Title
+              </label>
+              <input
+                type="text"
+                value={(resource?.user as any)?.title || ''}
+                disabled
+                className="mt-1 block w-full rounded-md border-gray-300 bg-gray-50 shadow-sm sm:text-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
                 Cost Rate (per hour)
               </label>
               <div className="mt-1 relative">
@@ -109,29 +120,6 @@ export function ResourcePanel({
                   className="block w-full pl-10 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                   required
                 />
-              </div>
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Competency Level
-              </label>
-              <div className="mt-1 relative">
-                <Star className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                <select
-                  value={formData.competency}
-                  onChange={(e) =>
-                    setFormData({ ...formData, competency: parseInt(e.target.value) })
-                  }
-                  className="block w-full pl-10 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                  required
-                >
-                  <option value={1}>Level 1 - Junior</option>
-                  <option value={2}>Level 2 - Mid-Level</option>
-                  <option value={3}>Level 3 - Senior</option>
-                  <option value={4}>Level 4 - Lead</option>
-                  <option value={5}>Level 5 - Expert</option>
-                </select>
               </div>
             </div>
 

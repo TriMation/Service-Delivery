@@ -1,6 +1,12 @@
 import { supabase } from './supabase';
 import type { Task } from '../types/database';
 
+export interface TaskWithHierarchy extends Task {
+  children?: TaskWithHierarchy[];
+  level: number;
+  totalHours: number;
+}
+
 export async function getTasks(userId: string, isAdmin: boolean) {
   let query = supabase
     .from('tasks')
@@ -30,9 +36,23 @@ export async function getTasks(userId: string, isAdmin: boolean) {
 }
 
 export async function createTask(task: Partial<Task>) {
+  // Get the current max task_order for the project
+  const { data: maxOrderTask } = await supabase
+    .from('tasks')
+    .select('task_order')
+    .eq('project_id', task.project_id)
+    .eq('parent_task_id', task.parent_task_id || null)
+    .order('task_order', { ascending: false })
+    .limit(1);
+
+  const nextOrder = maxOrderTask?.[0]?.task_order + 1 || 0;
+
   const { data, error } = await supabase
     .from('tasks')
-    .insert(task)
+    .insert({
+      ...task,
+      task_order: nextOrder
+    })
     .select()
     .single();
 
@@ -61,13 +81,77 @@ export async function deleteTask(taskId: string) {
   if (error) throw error;
 }
 
+// Get tasks for a specific project with related data
 export async function getProjectTasks(projectId: string) {
   const { data, error } = await supabase
     .from('tasks')
-    .select('*')
+    .select(`
+      *,
+      assigned_user:users!tasks_assigned_to_fkey(id, full_name, email)
+    `)
     .eq('project_id', projectId)
-    .order('created_at', { ascending: false });
+    .order('task_number', { ascending: true });
 
   if (error) throw error;
   return data;
+}
+
+export async function reorderTask(taskId: string, newOrder: number) {
+  const { error } = await supabase
+    .from('tasks')
+    .update({ task_order: newOrder })
+    .eq('id', taskId);
+
+  if (error) throw error;
+}
+
+export async function updateTaskDependency(taskId: string, dependencyId: string | null) {
+  const { error } = await supabase
+    .from('tasks')
+    .update({ dependency_task_id: dependencyId })
+    .eq('id', taskId);
+
+  if (error) throw error;
+}
+
+export async function updateTaskParent(taskId: string, parentId: string | null, newOrder: number) {
+  // First update the parent and order
+  const { error } = await supabase
+    .from('tasks')
+    .update({
+      parent_task_id: parentId,
+      task_order: newOrder
+    })
+    .eq('id', taskId);
+
+  if (error) throw error;
+
+  // Then reorder affected siblings - handle both root and child tasks
+  let query = supabase
+    .from('tasks')
+    .select('id, task_order');
+
+  if (parentId === null) {
+    // For root level tasks
+    query = query.is('parent_task_id', null);
+  } else {
+    // For child tasks
+    query = query.eq('parent_task_id', parentId);
+  }
+
+  const { data: siblings } = await query
+    .neq('id', taskId)
+    .gte('task_order', newOrder)
+    .order('task_order', { ascending: true });
+
+  if (siblings) {
+    for (let i = 0; i < siblings.length; i++) {
+      const { error } = await supabase
+        .from('tasks')
+        .update({ task_order: newOrder + i + 1 })
+        .eq('id', siblings[i].id);
+
+      if (error) throw error;
+    }
+  }
 }

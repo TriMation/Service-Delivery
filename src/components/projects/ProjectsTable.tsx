@@ -1,15 +1,16 @@
 import React from 'react';
 import { format } from 'date-fns';
-import { Building2, Calendar, Clock, CheckSquare } from 'lucide-react';
+import { Building2, Calendar, Clock, CheckSquare, Search, BarChart2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { Project } from '../../types/database';
 
 interface ProjectsTableProps {
   projects: Project[];
-  onProjectClick: (project: Project) => void;
-  canEdit: boolean;
+  selectedProjectId?: string;
+  onProjectSelect: (project: Project) => void;
 }
 
-export function ProjectsTable({ projects, onProjectClick, canEdit }: ProjectsTableProps) {
+export function ProjectsTable({ projects, selectedProjectId, onProjectSelect }: ProjectsTableProps) {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'active':
@@ -42,24 +43,24 @@ export function ProjectsTable({ projects, onProjectClick, canEdit }: ProjectsTab
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <table className="min-w-full divide-y divide-gray-200">
-        <thead className="bg-gray-50">
+        <thead className="bg-gray-50 text-left">
           <tr>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
               Client
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
               Project
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
               Status
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
               Progress
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
               Timeline
             </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider" colSpan={2}>
+            <th className="px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
               Hours (Used / Allocated)
             </th>
           </tr>
@@ -68,11 +69,32 @@ export function ProjectsTable({ projects, onProjectClick, canEdit }: ProjectsTab
           {projects.map((project) => (
             <tr
               key={project.id}
-              onClick={() => canEdit && onProjectClick(project)}
-              className={canEdit ? 'hover:bg-gray-50 cursor-pointer' : ''}
+              className={`hover:bg-gray-50 group ${selectedProjectId === project.id ? 'bg-blue-50' : ''}`}
             >
               <td className="px-6 py-4">
-                <div className="flex items-center text-sm text-gray-900">
+                <div className="flex items-center space-x-3">
+                  <div className="flex items-center space-x-2">
+                    <Link
+                      to="#"
+                      className="p-1.5 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-md transition-colors"
+                      title="View Details"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        onProjectSelect(project);
+                      }}
+                    >
+                      <Search className="h-4 w-4" />
+                    </Link>
+                    <Link
+                      to={`/projects/${project.id}`}
+                      className="p-1.5 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-md transition-colors"
+                      title="Gantt Chart"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <BarChart2 className="h-4 w-4" />
+                    </Link>
+                  </div>
                   <Building2 className="h-5 w-5 text-gray-400 mr-2" />
                   {(project.company as any)?.name || 'No Client'}
                 </div>

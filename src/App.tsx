@@ -5,6 +5,7 @@ import { AuthProvider } from './components/auth/AuthProvider';
 import { LoginForm } from './components/auth/LoginForm';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { ProjectsPage } from './components/projects/ProjectsPage';
+import { ProjectDetailPage } from './components/projects/ProjectDetailPage';
 import { ClientsPage } from './components/clients/ClientsPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { DashboardPage } from './components/dashboard/DashboardPage';
@@ -62,6 +63,16 @@ function AppRoutes() {
           <ProtectedRoute>
             <DashboardLayout>
               <ProjectsPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/projects/:projectId"
+        element={
+          <ProtectedRoute roles={['admin']}>
+            <DashboardLayout>
+              <ProjectDetailPage />
             </DashboardLayout>
           </ProtectedRoute>
         }

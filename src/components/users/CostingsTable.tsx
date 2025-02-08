@@ -32,9 +32,6 @@ export function CostingsTable({ resources, onResourceClick }: CostingsTableProps
               Cost Rate
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-              Competency
-            </th>
-            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Time Loading
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -60,6 +57,9 @@ export function CostingsTable({ resources, onResourceClick }: CostingsTableProps
                       {resource.user.full_name}
                     </div>
                     <div className="text-sm text-gray-500">
+                      {resource.user.title || 'No Title'}
+                    </div>
+                    <div className="text-sm text-gray-500">
                       {resource.user.email}
                     </div>
                   </div>
@@ -69,16 +69,6 @@ export function CostingsTable({ resources, onResourceClick }: CostingsTableProps
                 <div className="flex items-center text-sm text-gray-900">
                   <DollarSign className="h-5 w-5 text-gray-400 mr-2" />
                   {resource.cost?.toFixed(2) || 'Not set'}
-                </div>
-              </td>
-              <td className="px-6 py-4">
-                <div className="flex items-center">
-                  <Star className="h-5 w-5 text-gray-400 mr-2" />
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                    resource.competency ? getCompetencyColor(resource.competency) : 'bg-gray-100 text-gray-800'
-                  }`}>
-                    {resource.competency ? `Level ${resource.competency}` : 'Not set'}
-                  </span>
                 </div>
               </td>
               <td className="px-6 py-4">

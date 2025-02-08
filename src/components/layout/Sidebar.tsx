@@ -27,6 +27,7 @@ interface NavItem {
   href: string;
   roles: Array<'admin' | 'user' | 'client'>;
   divider?: boolean;
+  children?: NavItem[];
 }
 
 const navItems: NavItem[] = [
@@ -61,6 +62,13 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
   const filteredNavItems = navItems.filter(item => 
     item.roles.includes(user?.role as 'admin' | 'user' | 'client')
   );
+  
+  const isActiveRoute = (href: string) => {
+    if (href === '/projects/:projectId') {
+      return location.pathname.startsWith('/projects/') && location.pathname !== '/projects';
+    }
+    return location.pathname === href;
+  };
 
   const handleLogout = async () => {
     await signOut();
@@ -95,7 +103,7 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
         <nav className="flex-1 overflow-y-auto py-4">
           <ul className="space-y-1 px-3">
             {filteredNavItems.map((item, index) => {
-              const isActive = location.pathname === item.href;
+              const isActive = isActiveRoute(item.href);
               return (
                 <li key={item.href} className={item.divider ? 'mb-4 pb-4 border-b border-gray-200' : ''}>
                   <Link
@@ -117,6 +125,32 @@ export function Sidebar({ collapsed, setCollapsed }: SidebarProps) {
                       {item.label}
                     </span>
                   </Link>
+                  {!collapsed && item.children && (
+                    <ul className="mt-1 ml-8 space-y-1">
+                      {item.children.map((child) => {
+                        const isChildActive = isActiveRoute(child.href);
+                        // Don't show "Project Details" in submenu
+                        if (child.href === '/projects/:projectId') return null;
+                        return (
+                          <li key={child.href}>
+                            <Link
+                              to={child.href}
+                              className={`flex items-center px-3 py-2 text-sm rounded-lg transition-colors ${
+                                isChildActive
+                                  ? 'bg-indigo-50 text-indigo-600'
+                                  : 'text-gray-700 hover:bg-gray-50'
+                              }`}
+                            >
+                              <span className="flex items-center justify-center">
+                                {child.icon}
+                              </span>
+                              <span className="ml-3">{child.label}</span>
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  )}
                 </li>
               );
             })}

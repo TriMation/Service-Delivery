@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import { Plus, Search, Briefcase, Filter } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
@@ -9,7 +10,9 @@ import type { Project } from '../../types/database';
 
 export function ProjectsPage() {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [showProjectPanel, setShowProjectPanel] = useState(false);
   const [showCreatePanel, setShowCreatePanel] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
@@ -37,6 +40,11 @@ export function ProjectsPage() {
       </div>
     );
   }
+
+  const handleProjectSelect = (project: Project) => {
+    setSelectedProject(project);
+    setShowProjectPanel(true);
+  };
 
   return (
     <div className="space-y-6">
@@ -83,16 +91,17 @@ export function ProjectsPage() {
 
       <ProjectsTable
         projects={filteredProjects}
-        onProjectClick={setSelectedProject}
-        canEdit={user?.isAdmin}
+        selectedProjectId={selectedProject?.id}
+        onProjectSelect={handleProjectSelect}
       />
 
-      {(selectedProject || showCreatePanel) && (
+      {(showProjectPanel || showCreatePanel) && (
         <ProjectPanel
           project={selectedProject}
           isCreating={showCreatePanel}
           onClose={() => {
             setSelectedProject(null);
+            setShowProjectPanel(false);
             setShowCreatePanel(false);
           }}
         />

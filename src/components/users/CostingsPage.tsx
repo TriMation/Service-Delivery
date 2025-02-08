@@ -98,12 +98,10 @@ export function CostingsPage() {
         <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
           <div className="flex items-center text-sm font-medium text-gray-500 mb-1">
             <Star className="h-4 w-4 mr-1" />
-            Avg Competency
+            Total Cost Rate
           </div>
           <span className="text-2xl font-semibold text-gray-900">
-            {resources.length > 0
-              ? (resources.reduce((sum, r) => sum + (r.competency || 0), 0) / resources.length).toFixed(1)
-              : '0.0'}
+            ${resources.reduce((sum, r) => sum + (r.cost || 0), 0).toFixed(2)}
           </span>
         </div>
         

@@ -6,14 +6,15 @@ import { TaskList } from './TaskList';
 import { TaskKanban } from './TaskKanban';
 import { TaskPanel } from './TaskPanel';
 import { TaskFilters } from './TaskFilters';
-import { List, LayoutGrid, Plus } from 'lucide-react';
+import { List, LayoutGrid, Plus, CheckSquare } from 'lucide-react';
 import type { Task } from '../../types/database';
 
-export function TasksPage() {
+function TasksPage() {
   const { user } = useAuth();
   const [view, setView] = useState<'list' | 'kanban'>('kanban');
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
   const [showCreateModal, setShowCreateModal] = useState(false);
+  const [expandedTasks, setExpandedTasks] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState({
     search: '',
     status: '',
@@ -37,6 +38,33 @@ export function TasksPage() {
     },
   });
 
+  const handleIndentChange = async (taskId: string, direction: 'increase' | 'decrease') => {
+    const task = tasks.find(t => t.id === taskId);
+    if (!task) return;
+
+    try {
+      if (direction === 'increase') {
+        // Find potential parent (previous task at same level)
+        const index = tasks.findIndex(t => t.id === taskId);
+        if (index > 0) {
+          const previousTask = tasks[index - 1];
+          await updateTask(taskId, {
+            parent_task_id: previousTask.id
+          });
+        }
+      } else {
+        // Move task up one level
+        const currentParent = tasks.find(t => t.id === task.parent_task_id);
+        await updateTask(taskId, {
+          parent_task_id: currentParent?.parent_task_id || null
+        });
+      }
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+    } catch (err) {
+      console.error('Failed to update task hierarchy:', err);
+    }
+  };
+
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(filters.search.toLowerCase());
     const matchesStatus = !filters.status || task.status === filters.status;
@@ -57,7 +85,10 @@ export function TasksPage() {
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold text-gray-900">Tasks</h1>
+        <div className="flex items-center space-x-3">
+          <CheckSquare className="h-8 w-8 text-indigo-600" />
+          <h1 className="text-2xl font-semibold text-gray-900">Tasks</h1>
+        </div>
         <div className="flex items-center space-x-4">
           <div className="flex items-center bg-white rounded-lg border border-gray-200 p-1">
             <button
@@ -103,6 +134,7 @@ export function TasksPage() {
         <TaskList
           tasks={filteredTasks}
           onTaskClick={setSelectedTask}
+          onIndentChange={handleIndentChange}
           onStatusChange={(taskId, status) =>
             updateTaskMutation.mutate({ taskId, updates: { status } })
           }
@@ -135,3 +167,5 @@ export function TasksPage() {
     </div>
   );
 }
+
+export { TasksPage };

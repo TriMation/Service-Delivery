@@ -40,6 +40,7 @@ export interface User {
   id: string;
   email: string;
   full_name: string;
+  title: string | null;
   role: UserRole;
   company_id: string | null;
   created_at: string;
@@ -67,6 +68,12 @@ export interface Task {
   description: string | null;
   status: TaskStatus;
   assigned_to: string | null;
+  start_date: string | null;
+  end_date: string | null;
+  task_number: string | null;
+  task_order: number;
+  parent_task_id: string | null;
+  dependency_task_id: string | null;
   estimated_hours: number | null;
   due_date: string | null;
   created_at: string;
@@ -102,7 +109,6 @@ export interface ResourceMatrix {
   id: string;
   user_id: string;
   cost: number;
-  competency: number;
   time_loading: number;
   cost_loading: number;
   created_at: string;

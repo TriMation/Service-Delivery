@@ -1,14 +1,16 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, Building, Briefcase } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { createTask, updateTask, deleteTask } from '../../lib/tasks';
 import { getCompanies, getCompanyProjects } from '../../lib/companies';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Task } from '../../types/database';
 
 interface TaskPanelProps {
   task?: Task;
   isCreating?: boolean;
+  hasUnsavedChanges?: boolean;
+  projectId: string;
   onClose: () => void;
   onUpdate?: (updates: Partial<Task>) => void;
   onCreate?: () => void;
@@ -17,14 +19,30 @@ interface TaskPanelProps {
 export function TaskPanel({
   task,
   isCreating = false,
+  hasUnsavedChanges = false,
+  projectId,
   onClose,
   onUpdate,
   onCreate,
 }: TaskPanelProps) {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
+  const [formData, setFormData] = useState({
+    title: task?.title || '',
+    description: task?.description || '',
+    status: task?.status || 'todo',
+    project_id: task?.project_id || '',
+    assigned_to: task?.assigned_to || '',
+    start_date: task?.start_date || '',
+    due_date: task?.due_date
+      ? new Date(task.due_date).toISOString().split('T')[0]
+      : '',
+    estimated_hours: task?.estimated_hours || 0,
+  });
+  const [isDirty, setIsDirty] = useState(false);
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
@@ -37,17 +55,43 @@ export function TaskPanel({
     enabled: !!selectedCompanyId,
   });
 
-  const [formData, setFormData] = useState({
-    title: task?.title || '',
-    description: task?.description || '',
-    status: task?.status || 'todo',
-    project_id: task?.project_id || '',
-    due_date: task?.due_date
-      ? new Date(task.due_date).toISOString().split('T')[0]
-      : '',
-  });
+  // Update form data when task changes
+  useEffect(() => {
+    if (task) {
+      setFormData({
+        title: task.title,
+        description: task.description || '',
+        status: task.status,
+        project_id: task.project_id || '',
+        assigned_to: task.assigned_to || '',
+        start_date: task.start_date || '',
+        due_date: task.due_date
+          ? new Date(task.due_date).toISOString().split('T')[0]
+          : '',
+        estimated_hours: task.estimated_hours || 0,
+      });
+      setIsDirty(false);
+    }
+  }, [task]);
 
   const canEdit = user?.isAdmin || task?.assigned_to === user?.id;
+
+  // Handle form changes
+  const handleFormChange = (field: string, value: any) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    setIsDirty(true);
+  };
+
+  // Handle close with unsaved changes
+  const handleClose = () => {
+    if (isDirty) {
+      if (window.confirm('You have unsaved changes. Are you sure you want to close?')) {
+        onClose();
+      }
+    } else {
+      onClose();
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,10 +142,10 @@ export function TaskPanel({
       <div className="h-full flex flex-col">
         <div className="flex items-center justify-between p-4 border-b">
           <h3 className="text-lg font-medium text-gray-900">
-            {isCreating ? 'Create Task' : 'Task Details'}
+            {isCreating ? 'Create Task' : `Task Details ${isDirty ? '*' : ''}`}
           </h3>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="text-gray-400 hover:text-gray-500"
           >
             <X size={20} />
@@ -146,7 +190,7 @@ export function TaskPanel({
                     <select
                       value={formData.project_id}
                       onChange={(e) =>
-                        setFormData({ ...formData, project_id: e.target.value })
+                        handleFormChange('project_id', e.target.value)
                       }
                       className="block w-full pl-10 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
                       required
@@ -171,9 +215,7 @@ export function TaskPanel({
               <input
                 type="text"
                 value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
+                onChange={(e) => handleFormChange('title', e.target.value)}
                 disabled={!canEdit && !isCreating}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
                 required
@@ -186,9 +228,7 @@ export function TaskPanel({
               </label>
               <textarea
                 value={formData.description}
-                onChange={(e) =>
-                  setFormData({ ...formData, description: e.target.value })
-                }
+                onChange={(e) => handleFormChange('description', e.target.value)}
                 disabled={!canEdit && !isCreating}
                 rows={4}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
@@ -201,12 +241,7 @@ export function TaskPanel({
               </label>
               <select
                 value={formData.status}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    status: e.target.value as Task['status'],
-                  })
-                }
+                onChange={(e) => handleFormChange('status', e.target.value)}
                 disabled={!canEdit && !isCreating}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
               >
@@ -224,9 +259,7 @@ export function TaskPanel({
               <input
                 type="date"
                 value={formData.due_date}
-                onChange={(e) =>
-                  setFormData({ ...formData, due_date: e.target.value })
-                }
+                onChange={(e) => handleFormChange('due_date', e.target.value)}
                 disabled={!canEdit && !isCreating}
                 className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm disabled:bg-gray-100"
               />
@@ -253,7 +286,7 @@ export function TaskPanel({
               )}
               <button
                 type="button"
-                onClick={onClose}
+                onClick={handleClose}
                 disabled={loading}
                 className="px-4 py-2 text-sm font-medium text-gray-700 hover:text-gray-800 disabled:opacity-50"
               >

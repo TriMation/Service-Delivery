@@ -1,6 +1,22 @@
 import { supabase } from './supabase';
 import type { Project } from '../types/database';
 
+export async function getProject(projectId: string) {
+  const { data, error } = await supabase
+    .from('projects')
+    .select(`
+      *,
+      company:companies(*),
+      tasks:tasks!tasks_project_id_fkey(id, status),
+      time_entries(id, hours)
+    `)
+    .eq('id', projectId)
+    .single();
+
+  if (error) throw error;
+  return data;
+}
+
 export async function uploadProjectPDF(file: File) {
   const fileExt = file.name.split('.').pop();
   const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
