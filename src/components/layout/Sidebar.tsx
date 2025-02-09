@@ -4,6 +4,7 @@ import { useAuth } from '../auth/AuthProvider';
 import {
   LayoutDashboard,
   Briefcase,
+  BarChart2,
   Building2,
   CheckSquare,
   Clock,
@@ -32,17 +33,18 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', icon: <LayoutDashboard size={20} />, href: '/', roles: ['admin', 'user', 'client'] },
+  { label: 'Gantt', icon: <BarChart2 size={20} />, href: '/gantt', roles: ['admin', 'user'] },
   { label: 'Tasks', icon: <CheckSquare size={20} />, href: '/tasks', roles: ['admin'] },
   { label: 'Time Tracking', icon: <Clock size={20} />, href: '/time', roles: ['admin', 'user'] },
-  { label: 'Costings', icon: <DollarSign size={20} />, href: '/costings', roles: ['admin'] },
-  { label: 'Skills Matrix', icon: <Star size={20} />, href: '/skills', roles: ['admin'] },
   { label: 'Requests', icon: <MessagesSquare size={20} />, href: '/requests', roles: ['admin', 'user', 'client'], divider: true },
   
   { label: 'Projects', icon: <Briefcase size={20} />, href: '/projects', roles: ['admin'] },
   { label: 'Clients', icon: <Building2 size={20} />, href: '/clients', roles: ['admin'] },
-  { label: 'Reports', icon: <BarChart3 size={20} />, href: '/reports', roles: ['admin'] },
-  { label: 'User Management', icon: <UserCog size={20} />, href: '/users', roles: ['admin'], divider: true },
+  { label: 'Reports', icon: <BarChart3 size={20} />, href: '/reports', roles: ['admin'], divider: true },
   
+  { label: 'User Management', icon: <UserCog size={20} />, href: '/users', roles: ['admin'] },
+  { label: 'Costings', icon: <DollarSign size={20} />, href: '/costings', roles: ['admin'] },
+  { label: 'Skills Matrix', icon: <Star size={20} />, href: '/skills', roles: ['admin'] },
   { label: 'Settings', icon: <Settings size={20} />, href: '/settings', roles: ['admin'] },
   
   // User specific routes
