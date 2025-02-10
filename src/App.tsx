@@ -6,6 +6,7 @@ import { LoginForm } from './components/auth/LoginForm';
 import { DashboardLayout } from './components/layout/DashboardLayout';
 import { ProjectsPage } from './components/projects/ProjectsPage';
 import { ProjectDetailPage } from './components/projects/ProjectDetailPage';
+import { ProjectDetailFilters } from './components/projects/ProjectDetailFilters';
 import { ClientsPage } from './components/clients/ClientsPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { DashboardPage } from './components/dashboard/DashboardPage';
@@ -18,6 +19,8 @@ import { SkillsPage } from './components/users/SkillsPage';
 import { TasksPage } from './components/tasks/TasksPage';
 import { RequestsPage } from './components/requests/RequestsPage';
 import { useAuth } from './components/auth/AuthProvider';
+import { GanttChartPage } from './components/projects/GanttChartPage';
+import { BarChart2 } from 'lucide-react';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -73,6 +76,16 @@ function AppRoutes() {
           <ProtectedRoute roles={['admin']}>
             <DashboardLayout>
               <ProjectDetailPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/gantt"
+        element={
+          <ProtectedRoute>
+            <DashboardLayout>
+              <GanttChartPage />
             </DashboardLayout>
           </ProtectedRoute>
         }

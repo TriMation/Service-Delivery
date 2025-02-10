@@ -33,7 +33,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: 'Dashboard', icon: <LayoutDashboard size={20} />, href: '/', roles: ['admin', 'user', 'client'] },
-  { label: 'Gantt', icon: <BarChart2 size={20} />, href: '/gantt', roles: ['admin', 'user'] },
+  { label: 'Gantt', icon: <BarChart2 size={20} />, href: '/gantt', roles: ['admin', 'user'], divider: true },
   { label: 'Tasks', icon: <CheckSquare size={20} />, href: '/tasks', roles: ['admin'] },
   { label: 'Time Tracking', icon: <Clock size={20} />, href: '/time', roles: ['admin', 'user'] },
   { label: 'Requests', icon: <MessagesSquare size={20} />, href: '/requests', roles: ['admin', 'user', 'client'], divider: true },
