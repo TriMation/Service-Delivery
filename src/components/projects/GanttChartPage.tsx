@@ -1,104 +1,116 @@
-import React from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { Search, Building2, Briefcase } from 'lucide-react';
-import { getCompanies, getCompanyProjects } from '../../lib/companies';
+import React, { useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { BarChart2 } from 'lucide-react';
+import { useAuth } from '../auth/AuthProvider';
+import { getProject } from '../../lib/projects';
+import { getProjectTasks } from '../../lib/tasks';
+import { getTimeEntries } from '../../lib/time';
+import { ProjectDetailFilters } from './ProjectDetailFilters';
+import { GanttChart } from './GanttChart';
+import { TaskPanel } from '../tasks/TaskPanel';
+import type { Task } from '../../types/database';
 
-interface ProjectDetailFiltersProps {
-  filters: {
-    search: string;
-    companyId: string;
-    projectId: string;
-  };
-  setFilters: React.Dispatch<
-    React.SetStateAction<{
-      search: string;
-      companyId: string;
-      projectId: string;
-    }>
-  >;
-  standalone?: boolean;
-}
-
-export function ProjectDetailFilters({ filters, setFilters, standalone = false }: ProjectDetailFiltersProps) {
-  const { data: companies = [] } = useQuery({
-    queryKey: ['companies'],
-    queryFn: getCompanies,
+export function GanttChartPage() {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null);
+  const [filters, setFilters] = useState({
+    search: '',
+    companyId: '',
+    projectId: ''
   });
 
-  const { data: projects = [] } = useQuery({
-    queryKey: ['projects', filters.companyId],
-    queryFn: () => filters.companyId ? getCompanyProjects(filters.companyId) : [],
-    enabled: !!filters.companyId
+  // Fetch project data if selected
+  const { data: project, isLoading: projectLoading } = useQuery({
+    queryKey: ['project', filters.projectId],
+    queryFn: () => getProject(filters.projectId),
+    enabled: !!filters.projectId
   });
 
-  // Navigate to selected project
-  const handleProjectChange = (projectId: string) => {
-    if (projectId) {
-      if (standalone) {
-        setFilters(prev => ({ ...prev, projectId }));
-      } else {
-        setFilters(prev => ({ ...prev, projectId }));
-      }
-    } else {
-      setFilters(prev => ({ ...prev, projectId: '' }));
+  // Fetch tasks if project is selected
+  const { data: tasks = [], isLoading: tasksLoading } = useQuery({
+    queryKey: ['project-tasks', filters.projectId],
+    queryFn: () => getProjectTasks(filters.projectId),
+    enabled: !!filters.projectId
+  });
+
+  // Fetch time entries if project is selected
+  const { data: timeEntries = [], isLoading: timeEntriesLoading } = useQuery({
+    queryKey: ['project-time-entries', filters.projectId],
+    queryFn: () => getTimeEntries(user!.id, user!.isAdmin, { project: filters.projectId }),
+    enabled: !!filters.projectId
+  });
+
+  // Filter tasks based on search
+  const filteredTasks = tasks.filter(task => {
+    const matchesSearch = task.title.toLowerCase().includes(filters.search.toLowerCase()) ||
+      task.description?.toLowerCase().includes(filters.search.toLowerCase());
+    return matchesSearch;
+  });
+
+  // Show loading state while data is being fetched
+  const isLoading = projectLoading || tasksLoading || timeEntriesLoading;
+
+  // Show loading spinner while data is loading and we have a project selected
+  if (isLoading && filters.projectId) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-600"></div>
+      </div>
+    );
+  }
+
+  // Handle task updates
+  const handleTaskUpdate = async (updates: Partial<Task>) => {
+    try {
+      // Invalidate queries to refresh data
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['project-tasks'] }),
+        queryClient.invalidateQueries({ queryKey: ['project-time-entries'] })
+      ]);
+    } catch (error) {
+      console.error('Failed to update task:', error);
     }
   };
 
   return (
-    <div className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 space-y-4">
-      <div className="flex items-center space-x-4">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <input
-            type="text"
-            value={filters.search}
-            onChange={(e) =>
-              setFilters((prev) => ({ ...prev, search: e.target.value }))
-            }
-            placeholder="Search tasks..."
-            className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
-          />
-        </div>
-        <div className="relative">
-          <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <select
-            value={filters.companyId}
-            onChange={(e) => {
-              setFilters(prev => ({ 
-                ...prev,
-                companyId: e.target.value,
-                projectId: '' // Reset project when company changes
-              }));
-            }}
-            className="block w-48 pl-10 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-          >
-            <option value="">Select Client</option>
-            {companies.map((company) => (
-              <option key={company.id} value={company.id}>
-                {company.name}
-              </option>
-            ))}
-          </select>
-        </div>
-        <div className="relative">
-          <Briefcase className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-          <select
-            value={filters.projectId}
-            onChange={(e) =>
-              handleProjectChange(e.target.value)
-            }
-            className="block w-48 pl-10 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-            disabled={!filters.companyId}
-          >
-            <option value="">Select Project</option>
-            {projects.map((project) => (
-              <option key={project.id} value={project.id}>
-                {project.name}
-              </option>
-            ))}
-          </select>
-        </div>
+    <div className="space-y-6">
+      <div className="flex items-center space-x-3">
+        <BarChart2 className="h-8 w-8 text-indigo-600" />
+        <h1 className="text-2xl font-semibold text-gray-900">Gantt Chart</h1>
       </div>
+
+      <ProjectDetailFilters
+        filters={filters}
+        setFilters={setFilters}
+        standalone={true}
+      />
+
+      {!filters.projectId && (
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 text-center">
+          <p className="text-gray-600">Select a client and project to view the Gantt chart</p>
+        </div>
+      )}
+
+      {project && filters.projectId && (
+        <GanttChart
+          tasks={filteredTasks}
+          timeEntries={timeEntries}
+          projectStart={new Date(project.start_date)}
+          projectEnd={project.end_date ? new Date(project.end_date) : new Date(project.start_date)}
+          onTaskClick={setSelectedTask}
+          selectedTaskId={selectedTask?.id || undefined}
+        />
+      )}
+
+      {selectedTask && filters.projectId && (
+        <TaskPanel
+          task={selectedTask}
+          projectId={project!.id}
+          onClose={() => setSelectedTask(null)}
+          onUpdate={handleTaskUpdate}
+        />
+      )}
     </div>
   );
 }
