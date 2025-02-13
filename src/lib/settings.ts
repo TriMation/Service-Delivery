@@ -2,14 +2,47 @@ import { supabase } from './supabase';
 import type { SystemSettings } from '../types/database';
 
 export async function getSystemSettings(): Promise<SystemSettings | null> {
-  const { data, error } = await supabase
-    .from('system_settings')
-    .select('*')
-    .eq('id', '00000000-0000-0000-0000-000000000001')
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('system_settings')
+      .select()
+      .eq('id', '00000000-0000-0000-0000-000000000001')
+      .maybeSingle();
 
-  if (error) throw error;
-  return data;
+    if (error) {
+      console.error('Failed to fetch system settings:', error);
+      return null;
+    }
+
+    // If no data, return default settings
+    if (!data) {
+      return {
+        id: '00000000-0000-0000-0000-000000000001',
+        organization_name: 'TriMation Service Delivery',
+        logo_url: 'https://www.trimation.com.au/wp-content/uploads/2022/05/TriMation-logo.png',
+        primary_color: '#4f46e5',
+        password_min_length: 8,
+        session_timeout: 30,
+        two_factor_enabled: false,
+        pdf_title_format: '{project_name} - Project Report',
+        pdf_font_family: 'Roboto',
+        pdf_font_size_body: 10,
+        pdf_font_size_header: 18,
+        pdf_margin_top: 40,
+        pdf_margin_bottom: 40,
+        pdf_margin_left: 40,
+        pdf_margin_right: 40,
+        pdf_footer_text: 'Page {page} of {pages} - Generated on {date}',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      } as SystemSettings;
+    }
+
+    return data;
+  } catch (error) {
+    console.error('Unexpected error fetching system settings:', error);
+    return null;
+  }
 }
 
 export async function updateSystemSettings(updates: Partial<SystemSettings>): Promise<SystemSettings> {
@@ -20,7 +53,11 @@ export async function updateSystemSettings(updates: Partial<SystemSettings>): Pr
     .select()
     .single();
 
-  if (error) throw error;
+  if (error) {
+    console.error('Failed to update system settings:', error);
+    throw error;
+  }
+
   return data;
 }
 

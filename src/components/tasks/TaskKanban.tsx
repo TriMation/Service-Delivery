@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { format } from 'date-fns';
 import confetti from 'canvas-confetti';
-import { User, Calendar, Building2 } from 'lucide-react';
+import { User, Calendar, Building2, Clock } from 'lucide-react';
+import { getTaskHours, getKanbanColor } from '../../lib/taskUtils';
 import type { Task } from '../../types/database';
 
 interface TaskKanbanProps {
@@ -96,9 +97,9 @@ export function TaskKanban({ tasks, onTaskClick, onStatusChange }: TaskKanbanPro
                   onDragStart={(e) => handleDragStart(e, task.id)}
                   onDragEnd={handleDragEnd}
                   onClick={() => onTaskClick(task)}
-                  className="bg-white p-4 rounded-lg shadow-sm border border-gray-200 cursor-move 
+                  className={`p-4 rounded-lg shadow-sm border border-gray-200 cursor-move
                     hover:shadow-md transition-all duration-200 hover:border-indigo-300
-                    active:cursor-grabbing"
+                    active:cursor-grabbing ${getKanbanColor(task)}`}
                   style={{ textDecoration: task.status === 'completed' ? 'line-through' : 'none' }}
                 >
                   <h4 className="font-medium text-gray-900 mb-2">{task.title}</h4>
@@ -120,6 +121,12 @@ export function TaskKanban({ tasks, onTaskClick, onStatusChange }: TaskKanbanPro
                     <div className="flex items-center">
                       <Calendar className="h-4 w-4 mr-1" />
                       {task.due_date ? format(new Date(task.due_date), 'MMM d') : 'No due date'}
+                    </div>
+                    <div className="flex items-center mt-2">
+                      <Clock className="h-4 w-4 mr-1" />
+                      <span className={`font-medium ${getTaskHours(task) > (task.estimated_hours || 0) ? 'text-red-600' : ''}`}>
+                        {getTaskHours(task).toFixed(1)}/{task.estimated_hours || 0}h
+                      </span>
                     </div>
                   </div>
                 </div>

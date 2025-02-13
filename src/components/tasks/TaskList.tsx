@@ -2,6 +2,7 @@ import React from 'react';
 import { format } from 'date-fns';
 import { CheckSquare, Clock, User } from 'lucide-react';
 import type { Task } from '../../types/database';
+import { getTaskHoursUsed, getProgressColorClass, getProgressWidth } from '../../lib/taskUtils';
 
 interface TaskListProps {
   tasks: Task[];
@@ -13,13 +14,13 @@ export function TaskList({ tasks, onTaskClick, onStatusChange }: TaskListProps) 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-800';
+        return 'bg-green-100 text-green-800 border-green-200';
       case 'in_progress':
-        return 'bg-blue-100 text-blue-800';
+        return 'bg-blue-100 text-blue-800 border-blue-200';
       case 'review':
-        return 'bg-yellow-100 text-yellow-800';
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       default:
-        return 'bg-gray-100 text-gray-800';
+        return 'bg-gray-100 text-gray-800 border-gray-200';
     }
   };
 
@@ -28,18 +29,16 @@ export function TaskList({ tasks, onTaskClick, onStatusChange }: TaskListProps) 
     const taskMap = new Map<string, Task & { children: Task[] }>();
     const rootTasks: (Task & { children: Task[] })[] = [];
 
-    // First pass: Create task objects with children arrays
-    tasks.forEach(task => {
+    tasks.forEach((task) => {
       taskMap.set(task.id, { ...task, children: [] });
     });
 
-    // Second pass: Build hierarchy
-    tasks.forEach(task => {
-      const taskWithChildren = taskMap.get(task.id)!;
+    tasks.forEach((task) => {
+      const withChildren = taskMap.get(task.id)!;
       if (task.parent_task_id && taskMap.has(task.parent_task_id)) {
-        taskMap.get(task.parent_task_id)!.children.push(taskWithChildren);
+        taskMap.get(task.parent_task_id)!.children.push(withChildren);
       } else {
-        rootTasks.push(taskWithChildren);
+        rootTasks.push(withChildren);
       }
     });
 
@@ -48,14 +47,17 @@ export function TaskList({ tasks, onTaskClick, onStatusChange }: TaskListProps) 
 
   const hierarchicalTasks = buildTaskHierarchy(tasks);
 
-  const renderTask = (task: Task & { children: Task[] }, parentNumber?: string) => {
-    const taskNumber = parentNumber 
-      ? `${parentNumber}.${task.task_order + 1}`
-      : `${task.task_order + 1}`;
+  const renderTask = (task: Task & { children: Task[] }) => {
+    const taskNumber = task.task_number || '';
+    const hoursUsed = getTaskHoursUsed(task);
+    const isOverEstimate = task.estimated_hours > 0 && hoursUsed > task.estimated_hours;
 
     return (
       <React.Fragment key={task.id}>
-        <tr className="hover:bg-gray-50">
+        <tr
+          className="hover:bg-gray-50 transition-colors cursor-pointer"
+          onClick={() => onTaskClick(task)}
+        >
           <td className="px-6 py-4">
             <div className="flex items-center">
               <span className="font-mono text-sm text-gray-500 mr-2">
@@ -75,6 +77,24 @@ export function TaskList({ tasks, onTaskClick, onStatusChange }: TaskListProps) 
           </td>
           <td className="px-6 py-4">
             <div className="flex items-center text-sm text-gray-900">
+              <Clock className="h-5 w-5 text-gray-400 mr-2" />
+              <div className="flex flex-col space-y-1">
+                <span className={`font-medium ${isOverEstimate ? 'text-red-600' : ''}`}>
+                  {hoursUsed.toFixed(1)} / {task.estimated_hours || 0}h
+                </span>
+                {task.estimated_hours > 0 && (
+                  <div className="w-20 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    <div
+                      className={`h-full ${getProgressColorClass(task)}`}
+                      style={{ width: getProgressWidth(task) }}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+          </td>
+          <td className="px-6 py-4">
+            <div className="flex items-center text-sm text-gray-900">
               <User className="h-5 w-5 text-gray-400 mr-2" />
               {(task.assigned_user as any)?.full_name || 'Unassigned'}
             </div>
@@ -82,8 +102,12 @@ export function TaskList({ tasks, onTaskClick, onStatusChange }: TaskListProps) 
           <td className="px-6 py-4">
             <select
               value={task.status}
-              onChange={(e) => onStatusChange(task.id, e.target.value as Task['status'])}
-              className={`text-sm rounded-full px-3 py-1 font-medium ${getStatusColor(task.status)}`}
+              onChange={(e) =>
+                onStatusChange(task.id, e.target.value as Task['status'])
+              }
+              className={`text-sm rounded-full px-3 py-1 font-medium ${getStatusColor(
+                task.status
+              )}`}
             >
               <option value="todo">To Do</option>
               <option value="in_progress">In Progress</option>
@@ -100,7 +124,7 @@ export function TaskList({ tasks, onTaskClick, onStatusChange }: TaskListProps) 
             </div>
           </td>
         </tr>
-        {task.children.map((child) => renderTask(child, taskNumber))}
+        {task.children.map((child) => renderTask(child))}
       </React.Fragment>
     );
   };
@@ -112,6 +136,9 @@ export function TaskList({ tasks, onTaskClick, onStatusChange }: TaskListProps) 
           <tr>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Task
+            </th>
+            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+              Hours (Used/Est)
             </th>
             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
               Assigned To

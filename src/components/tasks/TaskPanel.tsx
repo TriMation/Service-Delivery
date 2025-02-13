@@ -3,7 +3,9 @@ import { X, Building, Briefcase } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { createTask, updateTask, deleteTask } from '../../lib/tasks';
 import { getCompanies, getCompanyProjects } from '../../lib/companies';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { getSkills } from '../../lib/skills';
+import { getTimeEntries } from '../../lib/time';
 import type { Task } from '../../types/database';
 
 interface TaskPanelProps {
@@ -16,7 +18,7 @@ interface TaskPanelProps {
   onCreate?: () => void;
 }
 
-export function TaskPanel({
+function TaskPanel({
   task,
   isCreating = false,
   hasUnsavedChanges = false,
@@ -36,13 +38,36 @@ export function TaskPanel({
     status: task?.status || 'todo',
     project_id: task?.project_id || '',
     assigned_to: task?.assigned_to || '',
+    estimated_hours: task?.estimated_hours || 0,
+    required_skills: [] as string[],
     start_date: task?.start_date || '',
     due_date: task?.due_date
       ? new Date(task.due_date).toISOString().split('T')[0]
       : '',
-    estimated_hours: task?.estimated_hours || 0,
   });
   const [isDirty, setIsDirty] = useState(false);
+
+  // Get task details including hours used
+  const { data: taskDetails } = useQuery({
+    queryKey: ['task-details', task?.id],
+    queryFn: async () => {
+      if (!task?.project_id) return null;
+      const projectTasks = await getProjectTasks(task.project_id);
+      return projectTasks.find(t => t.id === task.id) || null;
+    },
+    enabled: !!task
+  });
+
+  // Calculate hours used from time entries
+  const hoursUsed = taskDetails?.hours_used ?? 0;
+  const estimatedHours = taskDetails?.estimated_hours ?? 0;
+  const progress = taskDetails?.progress ?? 0;
+
+  // Fetch skills
+  const { data: skills = [] } = useQuery({
+    queryKey: ['skills'],
+    queryFn: getSkills,
+  });
 
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
@@ -237,6 +262,78 @@ export function TaskPanel({
 
             <div>
               <label className="block text-sm font-medium text-gray-700">
+                Estimated Hours
+              </label>
+              <input
+                type="number"
+                min="0"
+                step="0.5"
+                value={formData.estimated_hours}
+                onChange={(e) =>
+                  setFormData({ ...formData, estimated_hours: parseFloat(e.target.value) || 0 })
+                }
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              />
+              {task && (
+                <div className="mt-2">
+                  <div className="text-sm text-gray-500">Hours Used: {Number(hoursUsed).toFixed(2)}</div>
+                  <div className="mt-1 h-2 bg-gray-200 rounded-full overflow-hidden">
+                    {formData.estimated_hours > 0 && (
+                    <div
+                      className={`h-full ${
+                        hoursUsed > formData.estimated_hours
+                          ? 'bg-red-500'
+                          : hoursUsed / formData.estimated_hours > 0.8
+                          ? 'bg-yellow-500'
+                          : 'bg-green-500'
+                      }`}
+                      style={{
+                        width: `${Math.min(
+                          (hoursUsed / (formData.estimated_hours || 1)) * 100,
+                          100
+                        )}%`,
+                      }}
+                    />
+                    )}
+                  </div>
+                  {formData.estimated_hours > 0 && (
+                    <div className="mt-1 text-sm">
+                      <span className={hoursUsed > formData.estimated_hours ? 'text-red-600 font-medium' : ''}>
+                        {Math.round((hoursUsed / formData.estimated_hours) * 100)}% complete
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
+                Required Skills
+              </label>
+              <select
+                multiple
+                value={formData.required_skills}
+                onChange={(e) => {
+                  const selectedSkills = Array.from(e.target.selectedOptions, option => option.value);
+                  setFormData({ ...formData, required_skills: selectedSkills });
+                }}
+                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                size={4}
+              >
+                {skills.map((skill) => (
+                  <option key={skill.id} value={skill.id}>
+                    {skill.name}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-sm text-gray-500">
+                Hold Ctrl/Cmd to select multiple skills
+              </p>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700">
                 Status
               </label>
               <select
@@ -308,3 +405,5 @@ export function TaskPanel({
     </div>
   );
 }
+
+export { TaskPanel }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { X, Building2, Briefcase, FileText, Clock, Calendar } from 'lucide-react';
+import { X, Building2, Briefcase, FileText, Clock, Calendar, CheckSquare } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { createTimeEntry, updateTimeEntry, deleteTimeEntry } from '../../lib/time';
 import { getCompanies, getCompanyProjects } from '../../lib/companies';
@@ -24,6 +24,8 @@ export function TimeEntryPanel({
   const [error, setError] = useState<string>();
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const [selectedProjectId, setSelectedProjectId] = useState<string>(entry?.project_id || '');
+  const [taskSearch, setTaskSearch] = useState('');
+  const [isTasksLoading, setIsTasksLoading] = useState(false);
   const [formData, setFormData] = useState({
     project_id: entry?.project_id || '',
     task_id: entry?.task_id || '',
@@ -45,8 +47,28 @@ export function TimeEntryPanel({
 
   const { data: tasks = [] } = useQuery({
     queryKey: ['tasks', formData.project_id],
-    queryFn: () => formData.project_id ? getProjectTasks(formData.project_id) : [],
+    queryFn: async () => {
+      setIsTasksLoading(true);
+      if (!formData.project_id) return [];
+      try {
+        const tasks = await getProjectTasks(formData.project_id);
+        // Filter out completed tasks
+        return tasks.filter(task => task.status !== 'completed');
+      } finally {
+        setIsTasksLoading(false);
+      }
+    },
     enabled: !!formData.project_id,
+  });
+
+  // Filter tasks based on search
+  const filteredTasks = tasks.filter(task => {
+    const searchLower = taskSearch.toLowerCase();
+    return (
+      task.title.toLowerCase().includes(searchLower) ||
+      task.description?.toLowerCase().includes(searchLower) ||
+      task.task_number?.toLowerCase().includes(searchLower)
+    );
   });
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -189,24 +211,59 @@ export function TimeEntryPanel({
                 <div>
                   <label className="block text-sm font-medium text-gray-700">
                     Task
+                    <span className="text-gray-500 text-xs ml-2">(Optional)</span>
                   </label>
                   <div className="mt-1 relative">
                     <FileText className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                    <select
-                      value={formData.task_id}
-                      onChange={(e) =>
-                        setFormData({ ...formData, task_id: e.target.value })
-                      }
-                      className="block w-full pl-10 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
-                      disabled={!formData.project_id}
-                    >
-                      <option value="">Select a task (optional)</option>
-                      {tasks.map((task) => (
-                        <option key={task.id} value={task.id}>
-                          {task.title}
-                        </option>
-                      ))}
-                    </select>
+                    <input
+                      type="text"
+                      value={taskSearch}
+                      onChange={(e) => setTaskSearch(e.target.value)}
+                      placeholder="Search tasks..."
+                      className="block w-full pl-10 pr-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md mb-2"
+                    />
+                    <div className="mt-1 border border-gray-200 rounded-md max-h-48 overflow-y-auto relative">
+                      {isTasksLoading ? (
+                        <div className="p-8 flex items-center justify-center">
+                          <div className="animate-spin rounded-full h-6 w-6 border-t-2 border-b-2 border-indigo-600"></div>
+                        </div>
+                      ) : filteredTasks.length === 0 ? (
+                        <div className="p-3 text-sm text-gray-500 text-center">
+                          No tasks found
+                        </div>
+                      ) : (
+                        filteredTasks.map((task) => (
+                          <div
+                            key={task.id}
+                            onClick={() => setFormData(prev => ({ ...prev, task_id: task.id }))}
+                            className={`p-3 cursor-pointer hover:bg-gray-50 border-b last:border-b-0 ${
+                              formData.task_id === task.id ? 'bg-indigo-50' : ''
+                            }`}
+                          >
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <div className="font-medium text-gray-900">
+                                  <span className="font-mono text-sm text-gray-500 mr-2">
+                                    {task.task_number}
+                                  </span>
+                                  {task.title}
+                                </div>
+                                {task.description && (
+                                  <div className="text-sm text-gray-500 mt-1 line-clamp-2">
+                                    {task.description}
+                                  </div>
+                                )}
+                              </div>
+                              {formData.task_id === task.id && (
+                                <div className="text-indigo-600">
+                                  <CheckSquare className="h-5 w-5" />
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
                   </div>
                 </div>
               </>
