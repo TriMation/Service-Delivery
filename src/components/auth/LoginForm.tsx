@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { signIn } from '../../lib/auth';
 import { getSystemSettings } from '../../lib/settings';
 import { useAuth } from './AuthProvider';
+import { AuroraBackground } from '../ui/AuroraBackground';
 import { LogIn, Mail, Lock, AlertCircle, Eye, EyeOff } from 'lucide-react';
 
 export function LoginForm() {
@@ -78,21 +79,21 @@ export function LoginForm() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-12 px-4 sm:px-6 lg:px-8">
-      <div className="w-full max-w-md space-y-8 bg-white p-8 rounded-xl shadow-lg">
+    <AuroraBackground>
+      <div className="w-full max-w-md space-y-8 bg-white/95 backdrop-blur-sm p-8 rounded-xl shadow-lg border border-white/20">
         <img
           src={settings?.logo_url || "https://www.trimation.com.au/wp-content/uploads/2022/05/TriMation-logo.png"}
           alt={settings?.organization_name || "Company Logo"}
           className="h-12 mx-auto"
         />
         <div className="text-center">
-          <div className="mx-auto h-12 w-12 text-indigo-600 flex items-center justify-center bg-indigo-100 rounded-full">
+          <div className="mx-auto h-12 w-12 text-indigo-600 flex items-center justify-center bg-indigo-100/80 rounded-full">
             <LogIn className="h-6 w-6" />
           </div>
           <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
             Welcome back
           </h2>
-          <p className="mt-2 text-sm text-gray-600">
+          <p className="mt-2 text-sm text-gray-700">
             Sign in to access your dashboard
           </p>
         </div>
@@ -110,7 +111,7 @@ export function LoginForm() {
               type="email"
               autoComplete="email"
               required
-              className="block w-full rounded-lg border border-gray-300 pl-10 pr-3 py-2 text-gray-900 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+              className="block w-full rounded-lg border border-gray-300/80 bg-white/80 pl-10 pr-3 py-2 text-gray-900 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="Email address"
             />
             </div>
@@ -125,7 +126,7 @@ export function LoginForm() {
                 type={showPassword ? 'text' : 'password'}
                 autoComplete="current-password"
                 required
-                className="block w-full rounded-lg border border-gray-300 pl-10 pr-10 py-2 text-gray-900 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                className="block w-full rounded-lg border border-gray-300/80 bg-white/80 pl-10 pr-10 py-2 text-gray-900 placeholder-gray-500 focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 placeholder="Password"
               />
               <button
@@ -168,6 +169,6 @@ export function LoginForm() {
           </button>
         </form>
       </div>
-    </div>
+    </AuroraBackground>
   );
 }
