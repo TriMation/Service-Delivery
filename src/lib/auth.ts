@@ -126,18 +126,16 @@ export async function updateUserProfile(userId: string, updates: Partial<User>) 
 }
 
 export async function resetUserPassword(userId: string, newPassword: string) {
-  // Add delay to ensure database is ready
-  await new Promise(resolve => setTimeout(resolve, 1000));
-
   const { error } = await supabase.rpc('admin_reset_password', {
     user_id: userId,
     new_password: newPassword
   });
 
   if (error) {
-    console.error('Password reset error:', error);
-    throw new Error('Failed to reset password. Please ensure you have admin privileges.');
+    throw new Error(error.message || 'Failed to reset password');
   }
+
+  return true;
 }
 
 export async function listUsers() {
@@ -157,6 +155,11 @@ export async function createUser(userData: SignUpData) {
 export async function inviteClient(email: string, fullName: string, companyId: string) {
   const password = generateTempPassword();
 
+  // Step 1: Validate input
+  if (!email || !fullName || !companyId) {
+    throw new Error('Missing required fields');
+  }
+
   // Step 1: Check if user already exists
   const { data: existingUser } = await supabase
     .from('users')
@@ -168,11 +171,6 @@ export async function inviteClient(email: string, fullName: string, companyId: s
     throw new Error('User with this email already exists');
   }
 
-  // Step 2: Validate input
-  if (!email || !fullName || !companyId) {
-    throw new Error('Missing required fields');
-  }
-
   // Step 3: Create the auth user with metadata
   const { data: auth, error: authError } = await supabase.auth.signUp({
     email,
@@ -182,7 +180,8 @@ export async function inviteClient(email: string, fullName: string, companyId: s
         full_name: fullName,
         role: 'client',
         company_id: companyId,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
       }
     }
   });
@@ -206,6 +205,17 @@ export async function inviteClient(email: string, fullName: string, companyId: s
       console.error('Profile creation error:', profileError);
       await supabase.auth.admin.deleteUser(auth.user.id);
       throw profileError;
+    }
+
+    // Verify the role was properly set
+    const { data: verifyRole } = await supabase
+      .from('users')
+      .select('role')
+      .eq('id', auth.user.id)
+      .single();
+
+    if (!verifyRole || verifyRole.role !== 'client') {
+      throw new Error('Failed to set client role properly');
     }
   } catch (error) {
     // If anything fails during profile creation, clean up the auth user

@@ -112,15 +112,21 @@ export function ClientPanel({
   };
 
   const handlePasswordReset = async () => {
-    if (!clientUsers[0]?.id) return;
+    if (!clientUsers[0]?.id) {
+      setError('No user found to reset password');
+      return;
+    }
     
-    // Clear any existing messages
-    setError(undefined);
-    setInviteSuccess(undefined);
+    // Prevent multiple submissions
+    if (resetting) return;
+
+    // Start loading state
     setResetting(true);
     setResetSuccess(false);
+    setError(undefined);
+    setInviteSuccess(undefined);
 
-    // Validate password
+    // Client-side validation
     if (!newPassword) {
       setError('Password is required');
       setResetting(false);
@@ -133,13 +139,31 @@ export function ClientPanel({
       return;
     }
 
+
+    // Show loading state immediately
+    setResetting(true);
     try {
-      await resetUserPassword(clientUsers[0].id, newPassword);
+      // Show loading state for minimum 1 second
+      await new Promise(resolve => setTimeout(resolve, 1000));
+
+      const success = await resetUserPassword(clientUsers[0].id, newPassword);
+      
+      if (!success) {
+        throw new Error('Failed to reset password');
+      }
+      
       setResetSuccess(true);
       setNewPassword('');
+      
+      // Show success message for 2 seconds before closing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      setShowPasswordReset(false);
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to reset password. Please try again.';
+      const message = err instanceof Error 
+        ? err.message 
+        : 'Failed to reset password. Please try again.';
       setError(message);
+      setResetSuccess(false);
     } finally {
       setResetting(false);
     }
@@ -345,23 +369,23 @@ export function ClientPanel({
                     <button
                       type="button"
                       onClick={handlePasswordReset}
-                      disabled={resetting || !newPassword || resetSuccess}
-                      className={`w-full flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-200 ${
+                      disabled={resetting || !newPassword}
+                      className={`w-full flex justify-center items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 transition-all duration-300 ${
                         resetSuccess
                           ? 'text-white bg-green-500 hover:bg-green-600 focus:ring-green-500'
                           : 'text-white bg-indigo-600 hover:bg-indigo-700 focus:ring-indigo-500'
                       } disabled:opacity-50`}
                     >
                       {resetting ? (
-                        <div className="flex items-center">
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <div className="flex items-center justify-center w-full">
+                          <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                           </svg>
-                          Resetting...
+                          Updating Password...
                         </div>
                       ) : resetSuccess ? (
-                        <div className="flex items-center">
+                        <div className="flex items-center justify-center w-full">
                           <CheckCircle2 className="h-4 w-4 mr-2" />
                           Password Updated
                         </div>
@@ -372,8 +396,8 @@ export function ClientPanel({
                   </div>
                 )}
                 {resetSuccess && (
-                  <div className="mt-4 flex items-center gap-2 text-green-600 text-sm bg-green-50 p-3 rounded-md">
-                    <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
+                  <div className="mt-4 flex items-center gap-2 text-green-600 text-sm bg-green-50 p-3 rounded-md animate-in fade-in duration-300">
+                    <CheckCircle2 className="h-5 w-5 flex-shrink-0 animate-bounce" />
                     Password has been updated successfully
                   </div>
                 )}
