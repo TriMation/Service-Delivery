@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Building, Briefcase } from 'lucide-react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { X, Building, Briefcase, FileText, Clock, Calendar, User, Star } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { createTask, updateTask, deleteTask } from '../../lib/tasks';
 import { getCompanies, getCompanyProjects } from '../../lib/companies';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import { getSkills } from '../../lib/skills';
 import { getTimeEntries } from '../../lib/time';
 import type { Task } from '../../types/database';
@@ -39,7 +39,7 @@ function TaskPanel({
     project_id: task?.project_id || '',
     assigned_to: task?.assigned_to || '',
     estimated_hours: task?.estimated_hours || 0,
-    required_skills: [] as string[],
+    required_skill: '',
     start_date: task?.start_date || '',
     due_date: task?.due_date
       ? new Date(task.due_date).toISOString().split('T')[0]
@@ -94,6 +94,7 @@ function TaskPanel({
           ? new Date(task.due_date).toISOString().split('T')[0]
           : '',
         estimated_hours: task.estimated_hours || 0,
+        required_skill: '',
       });
       setIsDirty(false);
     }
@@ -308,27 +309,28 @@ function TaskPanel({
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700">
-                Required Skills
+              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                <Star className="h-4 w-4 text-indigo-500" />
+                <span>Required Skill</span>
               </label>
-              <select
-                multiple
-                value={formData.required_skills}
-                onChange={(e) => {
-                  const selectedSkills = Array.from(e.target.selectedOptions, option => option.value);
-                  setFormData({ ...formData, required_skills: selectedSkills });
+              <div className="mt-1 relative">
+                <select
+                  value={formData.required_skill}
+                  onChange={(e) => {
+                    setFormData({ ...formData, required_skill: e.target.value });
                 }}
-                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-                size={4}
-              >
-                {skills.map((skill) => (
-                  <option key={skill.id} value={skill.id}>
-                    {skill.name}
-                  </option>
-                ))}
-              </select>
-              <p className="mt-1 text-sm text-gray-500">
-                Hold Ctrl/Cmd to select multiple skills
+                  className="block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                >
+                  <option value="">No skill required</option>
+                  {skills.map((skill) => (
+                    <option key={skill.id} value={skill.id}>
+                      {skill.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <p className="mt-1 text-xs text-gray-500">
+                Select the primary skill required for this task
               </p>
             </div>
 
