@@ -87,15 +87,13 @@ export function TemplateDetailPage() {
     setError(undefined);
 
     try {
-      // Include all form data including requirements and benefits
+      // Update template and its requirements
       await updateTemplate(template.id, {
-        project_overview: formData.project_overview,
-        measure_improvements: formData.measure_improvements,
-        sign_off_criteria: formData.sign_off_criteria,
-        project_buffer: formData.project_buffer,
+        ...formData,
         requirements: formData.requirements,
         benefits: formData.benefits
       });
+      
       queryClient.invalidateQueries({ queryKey: ['template', templateId] });
       setSaveSuccess(true);
       setIsDirty(false);
@@ -103,6 +101,7 @@ export function TemplateDetailPage() {
       // Reset success state after 2 seconds
       setTimeout(() => setSaveSuccess(false), 2000);
     } catch (err) {
+      console.error('Failed to update template:', err);
       setError('Failed to update template');
     } finally {
       setLoading(false);
