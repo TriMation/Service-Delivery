@@ -21,6 +21,7 @@ export function TemplatePanel({
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [showAddTask, setShowAddTask] = useState(false);
   const [formData, setFormData] = useState({
     name: template?.name || '',
@@ -48,6 +49,7 @@ export function TemplatePanel({
     e.preventDefault();
     if (!user?.isAdmin) return;
 
+    setSaveSuccess(false);
     setLoading(true);
     setError(undefined);
 
@@ -61,7 +63,9 @@ export function TemplatePanel({
         await updateTemplate(template.id, formData);
       }
       queryClient.invalidateQueries({ queryKey: ['templates'] });
-      onClose();
+      setSaveSuccess(true);
+      // Reset success message after 2 seconds
+      setTimeout(() => setSaveSuccess(false), 2000);
     } catch (err) {
       setError('Failed to save template. Please try again.');
     } finally {
@@ -325,9 +329,13 @@ export function TemplatePanel({
               <button
                 type="submit"
                 disabled={loading}
-                className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md disabled:opacity-50"
+                className={`px-4 py-2 text-sm font-medium text-white rounded-md disabled:opacity-50 transition-colors duration-200 ${
+                  saveSuccess 
+                    ? 'bg-green-500 hover:bg-green-600' 
+                    : 'bg-indigo-600 hover:bg-indigo-700'
+                }`}
               >
-                {loading ? 'Saving...' : isCreating ? 'Create Template' : 'Save Changes'}
+                {loading ? 'Saving...' : saveSuccess ? 'Saved!' : isCreating ? 'Create Template' : 'Save Changes'}
               </button>
             </div>
           </div>

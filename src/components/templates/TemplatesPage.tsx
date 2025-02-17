@@ -3,13 +3,11 @@ import { useQuery } from '@tanstack/react-query';
 import { BookTemplate as FileTemplate, Plus, Search } from 'lucide-react';
 import { useAuth } from '../auth/AuthProvider';
 import { getTemplates } from '../../lib/templates';
-import { TemplatesList } from './TemplatesList';
-import { TemplatePanel } from './TemplatePanel';
+import { TemplatesList } from './TemplatesList'; 
 import type { Template } from '../../types/database';
 
 export function TemplatesPage() {
   const { user } = useAuth();
-  const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [showCreatePanel, setShowCreatePanel] = useState(false);
   const [filters, setFilters] = useState({
     search: '',
@@ -62,17 +60,12 @@ export function TemplatesPage() {
         </div>
       </div>
 
-      <TemplatesList
-        templates={filteredTemplates}
-        onTemplateClick={setSelectedTemplate}
-      />
+      <TemplatesList templates={filteredTemplates} />
 
-      {(selectedTemplate || showCreatePanel) && (
+      {showCreatePanel && (
         <TemplatePanel
-          template={selectedTemplate}
           isCreating={showCreatePanel}
           onClose={() => {
-            setSelectedTemplate(null);
             setShowCreatePanel(false);
           }}
         />

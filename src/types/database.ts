@@ -138,9 +138,36 @@ export interface Template {
   id: string;
   name: string;
   description?: string;
+  project_overview?: string;
+  measure_improvements?: string;
+  project_buffer?: number;
+  sign_off_criteria?: string;
   created_at: string;
   updated_at: string;
   created_by: string;
+  requirements?: TemplateRequirement[];
+  benefits?: TemplateBenefit[];
+  tasks?: TemplateTask[];
+}
+
+export interface TemplateRequirement {
+  id: string;
+  template_id: string;
+  requirement_text: string;
+  is_met: boolean;
+  deliverables_rich_text?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TemplateBenefit {
+  id: string;
+  template_id: string;
+  anticipated_benefit: string;
+  example?: string;
+  measurement?: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface TemplateTask {

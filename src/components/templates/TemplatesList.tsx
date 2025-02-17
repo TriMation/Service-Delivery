@@ -1,14 +1,16 @@
 import React from 'react';
 import { format } from 'date-fns';
+import { useNavigate } from 'react-router-dom';
 import { BookTemplate as FileTemplate, CheckSquare, Clock, User } from 'lucide-react';
 import type { Template } from '../../types/database';
 
 interface TemplatesListProps {
   templates: Template[];
-  onTemplateClick: (template: Template) => void;
 }
 
-export function TemplatesList({ templates, onTemplateClick }: TemplatesListProps) {
+export function TemplatesList({ templates }: TemplatesListProps) {
+  const navigate = useNavigate();
+
   return (
     <div className="bg-white rounded-lg shadow overflow-hidden">
       <table className="min-w-full divide-y divide-gray-200">
@@ -32,7 +34,7 @@ export function TemplatesList({ templates, onTemplateClick }: TemplatesListProps
           {templates.map((template) => (
             <tr
               key={template.id}
-              onClick={() => onTemplateClick(template)}
+              onClick={() => navigate(`/templates/${template.id}`)}
               className="hover:bg-gray-50 cursor-pointer"
             >
               <td className="px-6 py-4">

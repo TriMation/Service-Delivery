@@ -8,6 +8,7 @@ import { ProjectsPage } from './components/projects/ProjectsPage';
 import { ProjectDetailPage } from './components/projects/ProjectDetailPage';
 import { ProjectDetailFilters } from './components/projects/ProjectDetailFilters';
 import { ClientsPage } from './components/clients/ClientsPage';
+import { TemplateDetailPage } from './components/templates/TemplateDetailPage';
 import { TemplatesPage } from './components/templates/TemplatesPage';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import { DashboardPage } from './components/dashboard/DashboardPage';
@@ -177,6 +178,16 @@ function AppRoutes() {
           <ProtectedRoute roles={['admin']}>
             <DashboardLayout>
               <TemplatesPage />
+            </DashboardLayout>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/templates/:templateId"
+        element={
+          <ProtectedRoute roles={['admin']}>
+            <DashboardLayout>
+              <TemplateDetailPage />
             </DashboardLayout>
           </ProtectedRoute>
         }
