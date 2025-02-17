@@ -133,3 +133,26 @@ export interface SkillMatrix {
   user?: User;
   skill?: Skill;
 }
+
+export interface Template {
+  id: string;
+  name: string;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+}
+
+export interface TemplateTask {
+  id: string;
+  template_id: string;
+  title: string;
+  description?: string;
+  estimated_hours?: number;
+  required_skill?: string;
+  parent_task_id?: string;
+  task_order: number;
+  task_number?: string;
+  created_at: string;
+  updated_at: string;
+}

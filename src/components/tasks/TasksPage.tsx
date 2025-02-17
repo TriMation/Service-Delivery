@@ -18,6 +18,7 @@ function TasksPage() {
   const [filters, setFilters] = useState({
     search: '',
     status: '',
+    requiredSkill: '',
     assignedTo: '',
     companyId: '',
     projectId: '',
@@ -68,10 +69,11 @@ function TasksPage() {
   const filteredTasks = tasks.filter(task => {
     const matchesSearch = task.title.toLowerCase().includes(filters.search.toLowerCase());
     const matchesStatus = !filters.status || task.status === filters.status;
+    const matchesSkill = !filters.requiredSkill || task.required_skill === filters.requiredSkill;
     const matchesAssignee = !filters.assignedTo || task.assigned_to === filters.assignedTo;
     const matchesCompany = !filters.companyId || (task.project as any)?.company?.id === filters.companyId;
     const matchesProject = !filters.projectId || task.project_id === filters.projectId;
-    return matchesSearch && matchesStatus && matchesAssignee && matchesCompany && matchesProject;
+    return matchesSearch && matchesStatus && matchesSkill && matchesAssignee && matchesCompany && matchesProject;
   });
 
   if (isLoading) {

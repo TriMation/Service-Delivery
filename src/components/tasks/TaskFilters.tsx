@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
-import { Search } from 'lucide-react';
+import { Search, Star } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { getCompanies, getCompanyProjects } from '../../lib/companies';
+import { getSkills } from '../../lib/skills';
 
 interface TaskFiltersProps {
   filters: {
     search: string;
     status: string;
+    requiredSkill: string;
     assignedTo: string;
     companyId: string;
     projectId: string;
@@ -26,6 +28,11 @@ export function TaskFilters({ filters, setFilters }: TaskFiltersProps) {
   const { data: companies = [] } = useQuery({
     queryKey: ['companies'],
     queryFn: getCompanies,
+  });
+
+  const { data: skills = [] } = useQuery({
+    queryKey: ['skills'],
+    queryFn: getSkills,
   });
 
   const { data: projects = [] } = useQuery({
@@ -94,6 +101,20 @@ export function TaskFilters({ filters, setFilters }: TaskFiltersProps) {
           <option value="in_progress">In Progress</option>
           <option value="review">Review</option>
           <option value="completed">Completed</option>
+        </select>
+        <select
+          value={filters.requiredSkill}
+          onChange={(e) =>
+            setFilters((prev) => ({ ...prev, requiredSkill: e.target.value }))
+          }
+          className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md"
+        >
+          <option value="">All Skills</option>
+          {skills.map((skill) => (
+            <option key={skill.id} value={skill.id}>
+              {skill.name}
+            </option>
+          ))}
         </select>
       </div>
     </div>

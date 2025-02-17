@@ -30,6 +30,7 @@ function TaskPanel({
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [loading, setLoading] = useState(false);
+  const [saveSuccess, setSaveSuccess] = useState(false);
   const [error, setError] = useState<string>();
   const [selectedCompanyId, setSelectedCompanyId] = useState<string>('');
   const [formData, setFormData] = useState({
@@ -39,7 +40,7 @@ function TaskPanel({
     project_id: task?.project_id || '',
     assigned_to: task?.assigned_to || '',
     estimated_hours: task?.estimated_hours || 0,
-    required_skill: '',
+    required_skill: task?.required_skill || '',
     start_date: task?.start_date || '',
     due_date: task?.due_date
       ? new Date(task.due_date).toISOString().split('T')[0]
@@ -94,7 +95,7 @@ function TaskPanel({
           ? new Date(task.due_date).toISOString().split('T')[0]
           : '',
         estimated_hours: task.estimated_hours || 0,
-        required_skill: '',
+        required_skill: task.required_skill || '',
       });
       setIsDirty(false);
     }
@@ -122,6 +123,7 @@ function TaskPanel({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+    setSaveSuccess(false);
     setError(undefined);
 
     try {
@@ -133,7 +135,10 @@ function TaskPanel({
         });
         onCreate?.();
       } else if (task && onUpdate) {
-        onUpdate(formData);
+        await onUpdate(formData);
+        setSaveSuccess(true);
+        // Show success state for 500ms before closing
+        await new Promise(resolve => setTimeout(resolve, 500));
       }
       onClose();
     } catch (err) {
@@ -395,9 +400,13 @@ function TaskPanel({
                 <button
                   type="submit"
                   disabled={loading}
-                  className="px-4 py-2 text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 rounded-md disabled:opacity-50"
+                  className={`px-4 py-2 text-sm font-medium text-white rounded-md disabled:opacity-50 transition-colors duration-200 ${
+                    saveSuccess 
+                      ? 'bg-green-500 hover:bg-green-600' 
+                      : 'bg-indigo-600 hover:bg-indigo-700'
+                  }`}
                 >
-                  {loading ? 'Saving...' : 'Save'}
+                  {loading ? 'Saving...' : saveSuccess ? 'Saved!' : 'Save'}
                 </button>
               )}
             </div>

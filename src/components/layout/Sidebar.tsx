@@ -1,25 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuth } from '../auth/AuthProvider';
-import {
-  LayoutDashboard,
-  Briefcase,
-  BarChart2,
-  Building2,
-  CheckSquare,
-  Clock,
-  DollarSign,
-  BarChart3,
-  Star,
-  Users,
-  UserCog,
-  Settings,
-  LogOut,
-  ChevronLeft,
-  ChevronRight,
-  MessageSquare,
-  MessagesSquare,
-} from 'lucide-react';
+import { LayoutDashboard, Briefcase, BookTemplate as FileTemplate, BarChart2, Building2, CheckSquare, Clock, DollarSign, BarChart3, Star, Users, UserCog, Settings, LogOut, ChevronLeft, ChevronRight, MessageSquare, MessagesSquare } from 'lucide-react';
 import { signOut } from '../../lib/auth';
 
 interface NavItem {
@@ -41,6 +23,7 @@ const navItems: NavItem[] = [
   { label: 'Projects', icon: <Briefcase size={20} />, href: '/projects', roles: ['admin'] },
   { label: 'Clients', icon: <Building2 size={20} />, href: '/clients', roles: ['admin'] },
   { label: 'Reports', icon: <BarChart3 size={20} />, href: '/reports', roles: ['admin'], divider: true },
+  { label: 'Templates', icon: <FileTemplate size={20} />, href: '/templates', roles: ['admin'] },
   
   { label: 'User Management', icon: <UserCog size={20} />, href: '/users', roles: ['admin'] },
   { label: 'Costings', icon: <DollarSign size={20} />, href: '/costings', roles: ['admin'] },
