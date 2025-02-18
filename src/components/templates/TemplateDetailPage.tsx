@@ -5,6 +5,7 @@ import {
   BookTemplate as FileTemplate, 
   ChevronLeft, 
   Plus,
+  Pencil,
   X,
   Star, 
   Clock, 
@@ -32,6 +33,8 @@ export function TemplateDetailPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string>();
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [templateName, setTemplateName] = useState('');
 
   // Fetch template data
   const { data: template, isLoading } = useQuery({
@@ -54,6 +57,7 @@ export function TemplateDetailPage() {
   // Update form data when template changes
   React.useEffect(() => {
     if (template) {
+      setTemplateName(template.name);
       setFormData({
         project_overview: template.project_overview || '',
         measure_improvements: template.measure_improvements || '',
@@ -76,6 +80,24 @@ export function TemplateDetailPage() {
   const handleFormChange = (field: keyof typeof formData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     setIsDirty(true);
+  };
+
+  const handleNameSave = async () => {
+    if (!template || !user?.isAdmin || !templateName.trim()) return;
+
+    setLoading(true);
+    setError(undefined);
+
+    try {
+      await updateTemplate(template.id, { name: templateName.trim() });
+      queryClient.invalidateQueries({ queryKey: ['template', templateId] });
+      setIsEditingName(false);
+    } catch (err) {
+      console.error('Failed to update template name:', err);
+      setError('Failed to update template name');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Save all changes
@@ -213,7 +235,56 @@ export function TemplateDetailPage() {
           </button>
           <FileTemplate className="h-8 w-8 text-indigo-600" />
           <div>
-            <h1 className="text-2xl font-semibold text-gray-900">{template.name}</h1>
+            <div className="flex items-center space-x-2">
+              {isEditingName ? (
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    className="text-2xl font-semibold text-gray-900 bg-white border border-indigo-300 rounded-md px-2 py-1 focus:border-indigo-500 focus:ring-indigo-500"
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleNameSave();
+                      } else if (e.key === 'Escape') {
+                        setIsEditingName(false);
+                        setTemplateName(template.name);
+                      }
+                    }}
+                    autoFocus
+                  />
+                  <div className="flex items-center space-x-1">
+                    <button
+                      onClick={handleNameSave}
+                      disabled={loading}
+                      className="p-1 text-green-600 hover:text-green-700 rounded-md hover:bg-green-50"
+                    >
+                      <CheckSquare className="h-5 w-5" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        setIsEditingName(false);
+                        setTemplateName(template.name);
+                      }}
+                      className="p-1 text-gray-400 hover:text-gray-500 rounded-md hover:bg-gray-50"
+                    >
+                      <X className="h-5 w-5" />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center space-x-2">
+                  <h1 className="text-2xl font-semibold text-gray-900">{template.name}</h1>
+                  <button
+                    onClick={() => setIsEditingName(true)}
+                    className="p-1 text-gray-400 hover:text-gray-600 rounded-md hover:bg-gray-50"
+                  >
+                    <Pencil className="h-5 w-5" />
+                  </button>
+                </div>
+              )}
+            </div>
             {template.description && (
               <p className="text-sm text-gray-500">{template.description}</p>
             )}
